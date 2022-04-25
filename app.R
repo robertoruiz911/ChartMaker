@@ -2,7 +2,7 @@
 # By: AESoto
 # 20 April 2022
 
-chartLibraries <- c('tidyverse', 'highcharter', 'tidyquant', 'timetk', 'shinyWidgets', 'shiny' )
+chartLibraries <- c('quantmod', 'tidyverse', 'highcharter', 'tidyquant', 'timetk', 'shinyWidgets', 'shiny' )
 lapply(chartLibraries, require, character.only=TRUE)
 
 ############################
@@ -10,8 +10,8 @@ lapply(chartLibraries, require, character.only=TRUE)
 # TODO: expand data load....
 
 # 10 Yr Yield
-tenYr <- read.csv("DGS10.csv")
-tenYr <- tenYr[!(tenYr$DGS10=='.'),]
+# tenYr <- read.csv("DGS10.csv")
+# tenYr <- tenYr[!(tenYr$DGS10=='.'),]
 
 ############################
 
@@ -66,23 +66,19 @@ ui <- fluidPage(
 # Define server logic required to draw chart
 server <- function(input, output) {
   timeSeries <- eventReactive(input$go, {
-    prices <- switch(
-      input$selected,
-      "10Yr Yield" = tenYr,
-      "Something1" = "Something1",
-      "Something2" = "Something2"
+    # will apply switch statement to accomodate other chart subjects
+    getSymbols('^TNX', from = as.Date(input$start), to=as.Date(input$end))
+    tenYr <- na.omit(TNX)
+    tenYr$TNX.Volume <- NULL
     )
-    startDate <- input$start
-    endDate <- input$end
-    timeSeries <- prices %>%        # needs to be enhanced for other choices
-      select(DATE, DGS10) %>%
-      filter(DATE > startDate & DATE < endDate)
+    timeSeries <- tenYr
   })  # closes timeSeries function....
 
   output$distPlot <- renderPlot({
-    timeSeries() %>%
-      ggplot(aes(x = DGS10)) + 
-    geom_density(size = 1, color = "blue")
+    # this applies the quantmod charting...
+    chartSeries(timeSeries,
+                type="line",
+                theme=chartTheme('white'))
   }) # closes renderPlot function
 }
 
